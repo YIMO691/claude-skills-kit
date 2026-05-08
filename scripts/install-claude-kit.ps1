@@ -1,9 +1,10 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$Target,
+    [string]$Target = (Get-Location).Path,
 
     [ValidateSet("core", "unity")]
     [string]$Profile = "core",
+
+    [switch]$AutoProfile,
 
     [switch]$Force,
 
@@ -12,8 +13,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$sourceRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+# Auto-detect profile: scan target for Unity project markers
 $targetRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Target)
+if ($AutoProfile) {
+    $hasAssets = Test-Path (Join-Path $targetRoot "Assets") -PathType Container
+    $hasManifest = Test-Path (Join-Path $targetRoot "Packages\manifest.json") -PathType Container
+    if ($hasAssets -and $hasManifest) {
+        $Profile = "unity"
+        Write-Host "Auto-detected profile: unity"
+    } else {
+        $Profile = "core"
+        Write-Host "Auto-detected profile: core"
+    }
+}
+
+$sourceRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 
 if (-not (Test-Path -LiteralPath $targetRoot)) {
     New-Item -ItemType Directory -Force -Path $targetRoot | Out-Null
@@ -68,7 +82,8 @@ function Add-DirectoryItems {
 function Add-FileItems {
     param(
         [Parameter(Mandatory = $true)][string]$RelativeRoot,
-        [string[]]$ExcludeNames = @()
+        [string[]]$ExcludeNames = @(),
+        [string[]]$ExcludePatterns = @("*.local.json.example")
     )
 
     $root = Join-Path $sourceRoot $RelativeRoot
@@ -78,6 +93,13 @@ function Add-FileItems {
 
     Get-ChildItem -LiteralPath $root -File |
         Where-Object { $ExcludeNames -notcontains $_.Name } |
+        Where-Object {
+            $keep = $true
+            foreach ($pat in $ExcludePatterns) {
+                if ($_.Name -like $pat) { $keep = $false; break }
+            }
+            $keep
+        } |
         ForEach-Object {
             $relative = Join-Path $RelativeRoot $_.Name
             @{ Source = $relative; Dest = $relative }

@@ -1,0 +1,68 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate YAML frontmatter
+        shell: pwsh
+        run: |
+          $failed = $false
+          $skillFiles = Get-ChildItem -Path ".claude\skills" -Recurse -Filter "SKILL.md"
+          if ($skillFiles.Count -eq 0) {
+            Write-Host "::warning::No SKILL.md files found under .claude/skills/"
+            exit 0
+          }
+          foreach ($file in $skillFiles) {
+            $content = Get-Content -Path $file.FullName -Raw
+            if (-not ($content -match '^---\s*\n(.+?)\n---\s*\n')) {
+              Write-Host "::error file=$($file.FullName)::Missing or malformed YAML frontmatter (expected `---` delimiters)"
+              $failed = $true
+              continue
+            }
+            $frontmatter = $matches[1]
+            if ($frontmatter -notmatch '(?m)^name:\s*\S') {
+              Write-Host "::error file=$($file.FullName)::Missing 'name' field in frontmatter"
+              $failed = $true
+            }
+            if ($frontmatter -notmatch '(?m)^description:\s*\S') {
+              Write-Host "::error file=$($file.FullName)::Missing 'description' field in frontmatter"
+              $failed = $true
+            }
+          }
+          if ($failed) {
+            exit 1
+          }
+          Write-Host "All SKILL.md files have valid frontmatter."
+
+      - name: Test install script
+        shell: pwsh
+        run: |
+          $target = Join-Path $env:TEMP "test-install"
+          .\scripts\install-claude-kit.ps1 -Target $target -Profile core
+          $required = @("CLAUDE.md", "AGENTS.md", ".claude-kit-version")
+          $missing = @()
+          foreach ($item in $required) {
+            $path = Join-Path $target $item
+            if (-not (Test-Path -LiteralPath $path)) {
+              $missing += $item
+            }
+          }
+          if ($missing.Count -gt 0) {
+            Write-Host "::error::Install test failed — missing: $($missing -join ', ')"
+            exit 1
+          }
+          Write-Host "Install script verified successfully. All required files present in $target"
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v2

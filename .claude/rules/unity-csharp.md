@@ -1,3 +1,4 @@
+<!-- audience: unity-agents -->
 ---
 paths:
   - "Assets/**/*.cs"

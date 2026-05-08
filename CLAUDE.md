@@ -12,11 +12,8 @@ This file provides reusable guidance for Claude Code or other coding agents work
 
 ## 工作流
 
-1. 读取项目根目录说明：`README.md`、`CLAUDE.md`、`AGENTS.md`。
-2. 找到当前任务的最小上下文：相关源码、测试、配置和文档。
-3. 先写清验收标准或完成条件，再实施。
-4. 小步提交式工作：一次推进一个明确目标，避免顺手重构。
-5. 改完后运行能覆盖风险的最小验证，并说明验证结果。
+1. 读 README.md、CLAUDE.md、AGENTS.md 了解项目。
+2. 最小上下文定位 → 写验收标准 → 小步实现 → 验证。
 
 ## Skill 与 Agent 边界
 
@@ -27,11 +24,8 @@ This file provides reusable guidance for Claude Code or other coding agents work
 
 ## 代码原则
 
-- 优先沿用项目现有框架、目录结构、命名和测试方式。
-- 只改必要文件；无关重构、格式化和依赖升级单独处理。
-- 结构化数据使用结构化 API 或解析器，不用脆弱的字符串拼接。
-- 处理边界条件、错误路径、超时、空值和权限失败。
-- 不提交 API Key、Token、密码、缓存、构建产物、用户本地设置或大型训练输出。
+- 沿用项目现有框架、命名、目录结构和测试方式；只改必要文件。
+- 处理空值、异常、超时、权限失败等边界；避免 XSS、SQL 注入、命令注入。
 
 ## Token 节省
 

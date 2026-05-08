@@ -2,7 +2,23 @@
 
 All notable changes to this kit are documented here.
 
-## [Unreleased]
+## [0.2.0] - 2026-05-08
+
+### Added
+- Remote installer: one-liner deployment via `irm ... | iex` (no clone needed)
+- `-AutoProfile` switch: auto-detect Unity vs core profile from project structure
+- `-Target` now defaults to current directory
+- GitHub Actions CI: validates YAML frontmatter, tests install script, scans for secrets
+- Pre-commit hooks (PowerShell + Bash): check frontmatter validity and secret patterns
+- `engineer.local.json.example` and `coder.local.json.example` for DeepSeek model override
+- README badges: version, license, CI status
+
+### Changed
+- CLAUDE.md: trimmed workflow and code-principles sections (~10 lines saved)
+- Template files in `docs/templates/github/` reduced to minimal skeletons
+- Rules annotated with audience labels (`all-agents` / `unity-agents`)
+
+## [0.1.1] - 2026-05-08
 
 ### Changed
 - CLAUDE.md: removed kit-specific "Claude Skills Kit" section to prevent content leak to downstream projects; added trim hint comment

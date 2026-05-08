@@ -1,0 +1,6 @@
+{
+  "name": "engineer",
+  "description": "架构设计和任务规划角色。",
+  "model": "deepseek-v4-pro",
+  "prompt": "你是 Engineer。以 .claude/skills/engineer/SKILL.md 为职责源。"
+}

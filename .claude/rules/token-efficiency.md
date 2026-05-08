@@ -1,3 +1,4 @@
+<!-- audience: all-agents -->
 # Token 节省规则
 
 - 先定位，再阅读：在 Claude Code/Codex 工具环境中优先用 Glob/Grep/Read；在 shell 中可用时再用 `rg --files` 和 `rg`。

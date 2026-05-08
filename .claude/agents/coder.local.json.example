@@ -1,0 +1,6 @@
+{
+  "name": "coder",
+  "description": "代码实现角色。",
+  "model": "deepseek-v4-flash",
+  "prompt": "你是 Coder。以 .claude/skills/coder/SKILL.md 为职责源。"
+}

@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+#
+# pre-commit - Bash pre-commit hook for Claude Skills Kit.
+#
+# Validates staged SKILL.md YAML frontmatter and scans for obvious
+# secret patterns. Exits with 1 on violations, 0 if clean.
+#
+set -o errexit
+set -o nounset
+# Do not set pipefail; we manage exit codes manually.
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+exit_code=0
+
+info()  { printf -- "%b%s%b\n" "${CYAN}--- ${NC}" "$1" "${CYAN} ---${NC}"; }
+pass()  { printf -- "%bPASS  %s : %s%b\n" "${GREEN}" "$1" "$2" "${NC}"; }
+fail()  { printf -- "%bFAIL  %s : %s%b\n" "${RED}" "$1" "$2" "${NC}"; exit_code=1; }
+warn()  { printf -- "%b%s%b\n" "${YELLOW}" "$1" "${NC}"; }
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+has_valid_frontmatter() {
+    local file="$1"
+    # Must start with --- on its own line, contain at least one line of
+    # content, then close with --- on its own line at end of file.
+    # Also check for name: and description: in the delimited block.
+    awk '
+    BEGIN { in_fm = 0; content = ""; ok = 0; }
+    NR == 1 && /^---$/ { in_fm = 1; next; }
+    in_fm == 1 && /^---$/ { ok = 1; in_fm = 0; next; }
+    in_fm == 1 { content = content $0 "\n"; }
+    END {
+        if (!ok) { exit 1; }
+        if (content !~ /^name:[[:space:]]+\S/) { exit 2; }
+        if (content !~ /^description:[[:space:]]+\S/) { exit 3; }
+        exit 0;
+    }
+    ' "$file"
+    return $?
+}
+
+# ---------------------------------------------------------------------------
+# 1. YAML frontmatter check
+# ---------------------------------------------------------------------------
+info "YAML frontmatter check (.claude/skills/**/SKILL.md)"
+
+staged_skill_files=()
+while IFS= read -r line; do
+    staged_skill_files+=("$line")
+done < <(git diff --cached --name-only --diff-filter=ACMR | grep '^\.claude/skills/.*/SKILL\.md$' || true)
+
+if [ ${#staged_skill_files[@]} -eq 0 ]; then
+    warn "No staged SKILL.md files to check."
+else
+    for relpath in "${staged_skill_files[@]}"; do
+        # Only check if file still exists (not deleted)
+        if [ ! -f "$relpath" ]; then
+            continue
+        fi
+        has_valid_frontmatter "$relpath"
+        rc=$?
+        case $rc in
+            0)  pass "$relpath" "Valid YAML frontmatter with name and description" ;;
+            1)  fail "$relpath" "Missing or malformed YAML frontmatter (expected '---' delimiters)" ;;
+            2)  fail "$relpath" "Missing required 'name' field in frontmatter" ;;
+            3)  fail "$relpath" "Missing required 'description' field in frontmatter" ;;
+        esac
+    done
+fi
+
+# ---------------------------------------------------------------------------
+# 2. Secret pattern scan
+# ---------------------------------------------------------------------------
+info "Secret pattern scan (all staged files)"
+
+staged_files=()
+while IFS= read -r line; do
+    staged_files+=("$line")
+done < <(git diff --cached --name-only --diff-filter=ACMR || true)
+
+if [ ${#staged_files[@]} -eq 0 ]; then
+    warn "No staged files to scan for secrets."
+else
+    for relpath in "${staged_files[@]}"; do
+        # Only scan text-like extensions; skip binaries
+        case "$relpath" in
+            *.ps1|*.sh|*.yml|*.yaml|*.json|*.md|*.env|*.ini|*.cfg|*.conf|*.config|*.py|*.js|*.ts|*.rb|*.go|*.java|*.cs)
+                ;;
+            *)
+                continue
+                ;;
+        esac
+
+        if [ ! -f "$relpath" ]; then
+            continue
+        fi
+
+        # Check each pattern. We use grep -n to get line numbers.
+        # Pattern 1: api_key = "..." or api_key: "..."
+        while IFS=: read -r linenum _; do
+            fail "$relpath" "Potential API key (api_key = ...) at line $linenum"
+        done < <(grep -nE 'api_key\s*[:=]\s*["'"'"'][^"'"'"']+["'"'"']' "$relpath" || true)
+
+        # Pattern 2: sk- tokens
+        while IFS=: read -r linenum _; do
+            fail "$relpath" "Potential OpenAI/Auth token (sk-...) at line $linenum"
+        done < <(grep -nE 'sk-[A-Za-z0-9]{10,}' "$relpath" || true)
+
+        # Pattern 3: token = 20+ alphanumeric chars
+        while IFS=: read -r linenum _; do
+            fail "$relpath" "Potential token value (token.*=.*[a-zA-Z0-9]{20,}) at line $linenum"
+        done < <(grep -nE 'token.*=.*[a-zA-Z0-9]{20,}' "$relpath" || true)
+
+        # Pattern 4: password = 8+ non-whitespace
+        while IFS=: read -r linenum _; do
+            fail "$relpath" "Potential password value (password.*=.*[^[:space:]]{8,}) at line $linenum"
+        done < <(grep -nE 'password.*=.*[^[:space:]]{8,}' "$relpath" || true)
+    done
+
+    if [ "$exit_code" -eq 1 ]; then
+        printf "\n%bPotential secrets found in staged files. Commit blocked.%b\n" "${RED}" "${NC}"
+        printf "%bIf these are false positives, add a comment or .gitattributes override.%b\n" "${YELLOW}" "${NC}"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+printf "\n"
+if [ "$exit_code" -eq 0 ]; then
+    printf "%bAll pre-commit checks passed.%b\n" "${GREEN}" "${NC}"
+else
+    printf "%bPre-commit checks FAILED.%b\n" "${RED}" "${NC}"
+fi
+
+exit "$exit_code"

@@ -1,8 +1,10 @@
 # Claude Skills Kit
 
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](VERSION) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![CI](https://github.com/YIMO691/claude-skills-kit/actions/workflows/validate.yml/badge.svg)](https://github.com/YIMO691/claude-skills-kit/actions/workflows/validate.yml)
+
 这是一个可复制、可持续更新的 Claude/Codex 通用配置仓库。它从 `F:\Unity6_AI` 中提炼了通用工作规则、开发流程、仓库规范、学习笔记、进度汇报和 Unity 6 项目经验，方便新项目少做重复配置。
 
-当前版本：`0.1.0`，见 [VERSION](VERSION)。
+当前版本：`0.2.0`，见 [VERSION](VERSION)。
 
 ## 内容
 
@@ -19,7 +21,19 @@
 
 ## 快速使用
 
-在新项目中安装通用配置：
+**一行部署（推荐）：**
+
+```powershell
+irm https://raw.githubusercontent.com/YIMO691/claude-skills-kit/main/scripts/install-remote.ps1 | iex
+```
+
+在当前目录安装，自动检测项目类型。也可指定目标：
+
+```powershell
+.\install-remote.ps1 -Target "F:\MyProject" -Profile unity
+```
+
+**本地安装（已 clone 仓库）：**
 
 ```powershell
 cd "F:\Claude skills"
