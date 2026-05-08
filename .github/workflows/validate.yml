@@ -18,15 +18,17 @@ jobs:
         shell: pwsh
         run: |
           $failed = $false
-          $skillFiles = Get-ChildItem -Path ".claude\skills" -Recurse -Filter "SKILL.md"
-          if ($skillFiles.Count -eq 0) {
+          $skillFiles = Get-ChildItem -Path ".claude\skills" -Recurse -Filter "SKILL.md" -ErrorAction SilentlyContinue
+          if (-not $skillFiles -or $skillFiles.Count -eq 0) {
             Write-Host "::warning::No SKILL.md files found under .claude/skills/"
             exit 0
           }
           foreach ($file in $skillFiles) {
-            $content = Get-Content -Path $file.FullName -Raw
-            if (-not ($content -match '^---\s*\n(.+?)\n---\s*\n')) {
-              Write-Host "::error file=$($file.FullName)::Missing or malformed YAML frontmatter (expected `---` delimiters)"
+            $content = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
+            # Cross-platform: handle both CRLF and LF line endings
+            if (-not ($content -match '^---\s*\r?\n(.+?)\r?\n---\s*\r?\n')) {
+              Write-Host "::error file=$($file.FullName)::Missing or malformed YAML frontmatter (expected --- delimiters)"
               $failed = $true
               continue
             }
@@ -49,7 +51,9 @@ jobs:
         shell: pwsh
         run: |
           $target = Join-Path $env:TEMP "test-install"
-          .\scripts\install-claude-kit.ps1 -Target $target -Profile core
+          # Remove previous test dir if exists
+          if (Test-Path $target) { Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue }
+          & pwsh -ExecutionPolicy Bypass -File ".\scripts\install-claude-kit.ps1" -Target $target -Profile core
           $required = @("CLAUDE.md", "AGENTS.md", ".claude-kit-version")
           $missing = @()
           foreach ($item in $required) {

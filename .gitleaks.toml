@@ -1,0 +1,13 @@
+# Gitleaks configuration for Claude Skills Kit
+# The pre-commit scripts contain secret-detection *patterns* as documentation,
+# which would be flagged as false positives.
+
+[[rules]]
+  id = "pre-commit-scripts"
+  description = "Pre-commit hooks contain secret patterns as documentation, not real secrets"
+  path = '''scripts/pre-commit(\.ps1)?$'''
+  [rules.allow]
+    paths = [
+      '''scripts/pre-commit''',
+      '''scripts/pre-commit\.ps1'''
+    ]
