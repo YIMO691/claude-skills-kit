@@ -2,6 +2,22 @@
 
 All notable changes to this kit are documented here.
 
+## [0.2.1] - 2026-05-08
+
+### Added
+- `-DryRun` switch on install script: preview what would be copied/skipped without writing
+- `-Backup` switch on install script: backup existing files to `.claude-kit-backup/` before overwriting
+- `-Ref` parameter on remote install: pin to specific version tag or branch
+- `scripts/validate-kit.ps1`: shared validation (YAML, manifest, install test) for local and CI use
+
+### Fixed
+- Remote install: use `curl.exe` explicitly to avoid PowerShell alias conflict
+- Remote install: download label now correctly shows `-Ref` value when set
+
+### Changed
+- CI: replaced inline YAML validation with `validate-kit.ps1` call
+- CI: added remote install unity profile test step
+
 ## [0.2.0] - 2026-05-08
 
 ### Added

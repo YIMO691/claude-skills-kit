@@ -1,10 +1,10 @@
 # Claude Skills Kit
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](VERSION) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![CI](https://github.com/YIMO691/claude-skills-kit/actions/workflows/validate.yml/badge.svg)](https://github.com/YIMO691/claude-skills-kit/actions/workflows/validate.yml)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue)](VERSION) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![CI](https://github.com/YIMO691/claude-skills-kit/actions/workflows/validate.yml/badge.svg)](https://github.com/YIMO691/claude-skills-kit/actions/workflows/validate.yml)
 
 可复制、可持续更新的 Claude/Codex 通用配置仓库。提供 engineer(架构师) + coder(码农) 双角色协作体系、自动发现式安装脚本、CI 验证和一行部署能力。适合在新项目中快速搭建 AI 编码协作基线，少做重复配置。
 
-当前版本：`0.2.0`，见 [VERSION](VERSION)。
+当前版本：`0.2.1`，见 [VERSION](VERSION)。
 
 ## 内容
 
@@ -16,7 +16,7 @@
 - `.claude/settings.json`: 权限基线，拒绝 push/reset/递归删除等高风险命令。
 - `.claude/commands/`: 常用命令模板，例如 `progress` 进度摘要。
 - `docs/`: 工作流指南、反模式参考、技能清单、模型路由说明、下游模板。
-- `scripts/`: 本地安装、远程安装（一行部署）、pre-commit hook。
+- `scripts/`: 本地安装（支持 DryRun 预览、Backup 备份）、远程安装（版本固定）、pre-commit hook、validate-kit 自检。
 - `.github/workflows/`: CI 自动验证 YAML、安装脚本和密钥扫描。
 - `LICENSE`、`SECURITY.md`、`CONTRIBUTING.md`、`CHANGELOG.md`、`MAINTAINERS.md`。
 
@@ -28,25 +28,31 @@
 irm https://raw.githubusercontent.com/YIMO691/claude-skills-kit/main/scripts/install-remote.ps1 | iex
 ```
 
-在当前目录自动检测项目类型并安装。可指定目标和 profile：
+在当前目录自动检测项目类型并安装。可指定版本和目标：
 
 ```powershell
-# 下载后指定参数
-. { irm ... } | iex -Target "F:\MyProject" -Profile unity
+# 固定版本
+irm .../install-remote.ps1 | iex -Ref v0.2.1
+
+# 指定目标
+.\install-remote.ps1 -Target "F:\MyProject" -Profile unity
 ```
 
 **本地安装（已 clone 仓库）：**
 
 ```powershell
-# 自动检测项目类型
-.\scripts\install-claude-kit.ps1 -Target "F:\MyProject" -AutoProfile
+# 预览（不写入）
+.\scripts\install-claude-kit.ps1 -Target "F:\MyProject" -AutoProfile -DryRun
 
-# 手动指定 profile
-.\scripts\install-claude-kit.ps1 -Target "F:\MyProject" -Profile core
-.\scripts\install-claude-kit.ps1 -Target "F:\UnityProject" -Profile unity
+# 安装（覆盖前备份旧文件）
+.\scripts\install-claude-kit.ps1 -Target "F:\MyProject" -AutoProfile -Backup -Force
 ```
 
-如果目标项目已有配置文件，脚本默认跳过不覆盖。确认要更新时加 `-Force`。
+**自检：**
+
+```powershell
+.\scripts\validate-kit.ps1
+```
 
 ## 更新策略
 
