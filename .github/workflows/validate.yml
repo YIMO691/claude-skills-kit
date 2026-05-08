@@ -26,8 +26,8 @@ jobs:
           foreach ($file in $skillFiles) {
             $content = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
             if (-not $content) { continue }
-            # Cross-platform: handle both CRLF and LF line endings
-            if (-not ($content -match '^---\s*\r?\n(.+?)\r?\n---\s*\r?\n')) {
+            # Cross-platform: handle both CRLF and LF line endings; (?s) makes . match newlines
+            if (-not ($content -match '(?s)^---\s*\r?\n(.+?)\r?\n---\s*\r?\n')) {
               Write-Host "::error file=$($file.FullName)::Missing or malformed YAML frontmatter (expected --- delimiters)"
               $failed = $true
               continue
