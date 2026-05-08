@@ -1,0 +1,23 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+*.local.json
+settings.local.json
+
+# Logs/temp
+*.log
+tmp/
+temp/
+Temp/
+
+# Generated archives
+*.zip
+*.7z
+*.rar

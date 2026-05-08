@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "LS(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(rg:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard*)",
+      "Bash(rm -rf:*)",
+      "Bash(Remove-Item * -Recurse*)",
+      "Bash(del /s:*)",
+      "Bash(rmdir /s:*)"
+    ]
+  }
+}

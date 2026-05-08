@@ -1,0 +1,3 @@
+# Downstream project template. In this kit repository, .github/CODEOWNERS is the source of truth.
+# Replace with the repository owner or team.
+* @OWNER
