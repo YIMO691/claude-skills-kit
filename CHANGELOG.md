@@ -9,10 +9,17 @@ All notable changes to this kit are documented here.
 - `-Backup` switch on install script: backup existing files to `.claude-kit-backup/` before overwriting
 - `-Ref` parameter on remote install: pin to specific version tag or branch
 - `scripts/validate-kit.ps1`: shared validation (YAML, manifest, install test) for local and CI use
+- `docs/reference/install-manifest.md`: explicit downstream install file policy
 
 ### Fixed
 - Remote install: use `curl.exe` explicitly to avoid PowerShell alias conflict
 - Remote install: download label now correctly shows `-Ref` value when set
+- Installer now copies `scripts/install-claude-kit.ps1` and `scripts/validate-kit.ps1` to downstream projects so README validation commands work after one-line install.
+- Installer now copies `VERSION` as well as `.claude-kit-version` so downstream local reinstall and validation can run from the installed copy.
+- `validate-kit.ps1` skips manifest consistency checks when docs were not installed.
+- `validate-kit.ps1` now checks downstream must-exist and must-not-exist install rules by profile.
+- Unity profile no longer installs the kit-only `claude-config-maintainer` skill.
+- `validate-kit.ps1` now uses a unique temporary install test directory to avoid parallel validation races.
 
 ### Changed
 - CI: replaced inline YAML validation with `validate-kit.ps1` call

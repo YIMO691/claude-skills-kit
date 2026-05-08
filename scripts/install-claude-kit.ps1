@@ -142,21 +142,27 @@ function Add-FileItems {
 $rootItems = @(
     @{ Source = "CLAUDE.md"; Dest = "CLAUDE.md" },
     @{ Source = "AGENTS.md"; Dest = "AGENTS.md" },
+    @{ Source = "VERSION"; Dest = "VERSION" },
     @{ Source = "VERSION"; Dest = ".claude-kit-version" }
+)
+
+$scriptItems = @(
+    @{ Source = "scripts\install-claude-kit.ps1"; Dest = "scripts\install-claude-kit.ps1" },
+    @{ Source = "scripts\validate-kit.ps1"; Dest = "scripts\validate-kit.ps1" }
 )
 
 $items = @()
 $items += $rootItems
+$items += $scriptItems
 $items += @{ Source = ".claude\settings.json"; Dest = ".claude\settings.json" }
 $items += Add-FileItems -RelativeRoot ".claude\agents"
 $items += Add-FileItems -RelativeRoot ".claude\commands"
 
 $ruleExclusions = @()
-$skillExclusions = @()
+$skillExclusions = @("claude-config-maintainer")
 if ($Profile -eq "core") {
     $ruleExclusions += "unity-csharp.md"
     $skillExclusions += "unity6-project"
-    $skillExclusions += "claude-config-maintainer"
 }
 
 $items += Add-FileItems -RelativeRoot ".claude\rules" -ExcludeNames $ruleExclusions

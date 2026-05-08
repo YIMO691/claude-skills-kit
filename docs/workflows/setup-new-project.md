@@ -9,8 +9,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-claude-kit.ps1 -Targe
 
 This installs:
 
-- `CLAUDE.md`
-- `AGENTS.md`
+- `CLAUDE.md`, `AGENTS.md`, `VERSION`, `.claude-kit-version`
+- `scripts/install-claude-kit.ps1`, `scripts/validate-kit.ps1`
+- `.claude/settings.json`
 - `.claude/agents/`
 - `.claude/commands/`
 - core rules
@@ -23,6 +24,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-claude-kit.ps1 -Targe
 ```
 
 This adds Unity C# rules and the `unity6-project` skill.
+
+See `docs/reference/install-manifest.md` for the exact must-exist and must-not-exist file rules.
 
 ## After Install
 

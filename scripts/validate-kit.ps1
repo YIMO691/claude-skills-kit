@@ -1,4 +1,7 @@
 param(
+    [ValidateSet("auto", "core", "unity", "kit")]
+    [string]$Profile = "auto",
+
     [switch]$FixManifest
 )
 
@@ -8,6 +11,21 @@ $scriptRoot = $PSScriptRoot
 $repoRoot = Resolve-Path (Join-Path $scriptRoot "..")
 
 $allPassed = $true
+
+if ($Profile -eq "auto") {
+    if (Test-Path -LiteralPath (Join-Path $repoRoot "docs\reference\install-manifest.md")) {
+        $Profile = "kit"
+    } elseif (
+        (Test-Path -LiteralPath (Join-Path $repoRoot ".claude\rules\unity-csharp.md")) -or
+        (Test-Path -LiteralPath (Join-Path $repoRoot ".claude\skills\unity6-project"))
+    ) {
+        $Profile = "unity"
+    } else {
+        $Profile = "core"
+    }
+}
+
+Write-Host "Validation profile: $Profile"
 
 function Write-Pass {
     param([string]$Message)
@@ -83,14 +101,15 @@ Write-Host "=== Validate: Manifest consistency ==="
 $manifestPath = Join-Path $repoRoot "docs\reference\skills-manifest.md"
 
 $manifestSkills = @()
-if (Test-Path -LiteralPath $manifestPath) {
+$hasManifestFile = Test-Path -LiteralPath $manifestPath
+if ($hasManifestFile) {
     $manifestContent = Get-Content -LiteralPath $manifestPath -Raw
     $tableMatches = [regex]::Matches($manifestContent, '(?m)^\|\s*`([^`]+)`\s*\|')
     foreach ($m in $tableMatches) {
         $manifestSkills += $m.Groups[1].Value
     }
 } else {
-    Write-Warn "Manifest file not found"
+    Write-Warn "Manifest file not found; skipping manifest consistency check"
 }
 
 $diskSkills = @()
@@ -98,24 +117,28 @@ if (Test-Path -LiteralPath $skillsDir) {
     $diskSkills = Get-ChildItem -LiteralPath $skillsDir -Directory | ForEach-Object { $_.Name }
 }
 
-$notOnDisk = $manifestSkills | Where-Object { $_ -notin $diskSkills }
-$notInManifest = $diskSkills | Where-Object { $_ -notin $manifestSkills }
+if ($hasManifestFile) {
+    $notOnDisk = $manifestSkills | Where-Object { $_ -notin $diskSkills }
+    $notInManifest = $diskSkills | Where-Object { $_ -notin $manifestSkills }
 
-if ($notOnDisk.Count -eq 0 -and $notInManifest.Count -eq 0) {
-    Write-Pass "all skills match"
-} else {
-    if ($notOnDisk.Count -gt 0) {
-        $missingDisk = $notOnDisk -join ", "
-        Write-Fail "in manifest but not on disk: $missingDisk"
-    }
-    if ($notInManifest.Count -gt 0) {
-        foreach ($skill in $notInManifest) {
-            Write-Fail "$skill is on disk but missing from manifest"
+    if ($notOnDisk.Count -eq 0 -and $notInManifest.Count -eq 0) {
+        Write-Pass "all skills match"
+    } else {
+        if ($notOnDisk.Count -gt 0) {
+            $missingDisk = $notOnDisk -join ", "
+            Write-Fail "in manifest but not on disk: $missingDisk"
+        }
+        if ($notInManifest.Count -gt 0) {
+            foreach ($skill in $notInManifest) {
+                Write-Fail "$skill is on disk but missing from manifest"
+            }
         }
     }
+} else {
+    $notInManifest = @()
 }
 
-if ($FixManifest -and $notInManifest.Count -gt 0 -and (Test-Path -LiteralPath $manifestPath)) {
+if ($FixManifest -and $notInManifest.Count -gt 0 -and $hasManifestFile) {
     $lines = Get-Content -LiteralPath $manifestPath
     $lastDataIndex = -1
     for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -140,7 +163,7 @@ if ($FixManifest -and $notInManifest.Count -gt 0 -and (Test-Path -LiteralPath $m
                     }
                 }
             }
-            $newRows += "| `` $skill `` | $desc | TBD |"
+            $newRows += "| ``$skill`` | $desc | TBD |"
         }
 
         $newContent = @()
@@ -163,12 +186,114 @@ if ($FixManifest -and $notInManifest.Count -gt 0 -and (Test-Path -LiteralPath $m
 Write-Host ""
 
 # ============================================================
-# Check 3: Install script test (core profile)
+# Check 3: Installed file policy
+# ============================================================
+Write-Host "=== Validate: Installed file policy ==="
+
+function Test-RelativePath {
+    param([string]$RelativePath)
+    Test-Path -LiteralPath (Join-Path $repoRoot $RelativePath)
+}
+
+function Test-RelativeGlob {
+    param([string]$RelativePattern)
+    $parent = Split-Path -Parent $RelativePattern
+    $leaf = Split-Path -Leaf $RelativePattern
+    $root = if ($parent) { Join-Path $repoRoot $parent } else { $repoRoot }
+    if (-not (Test-Path -LiteralPath $root)) { return $false }
+    $matches = Get-ChildItem -LiteralPath $root -Filter $leaf -ErrorAction SilentlyContinue
+    return ($matches.Count -gt 0)
+}
+
+$coreMustExist = @(
+    "CLAUDE.md",
+    "AGENTS.md",
+    "VERSION",
+    ".claude-kit-version",
+    "scripts\install-claude-kit.ps1",
+    "scripts\validate-kit.ps1",
+    ".claude\settings.json",
+    ".claude\agents\coder.json",
+    ".claude\agents\engineer.json",
+    ".claude\commands\progress.md",
+    ".claude\rules\core-development.md",
+    ".claude\rules\safe-remote-commands.md",
+    ".claude\rules\token-efficiency.md",
+    ".claude\skills\coder\SKILL.md",
+    ".claude\skills\engineer\SKILL.md",
+    ".claude\skills\engineer-coder-orchestrator\SKILL.md",
+    ".claude\skills\github-repo-standards\SKILL.md",
+    ".claude\skills\learning-blog\SKILL.md"
+)
+
+$unityMustExist = @(
+    ".claude\rules\unity-csharp.md",
+    ".claude\skills\unity6-project\SKILL.md"
+)
+
+$downstreamMustNotExist = @(
+    ".claude\skills\claude-config-maintainer",
+    "docs",
+    ".github",
+    ".gitleaks.toml",
+    "MAINTAINERS.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CONTRIBUTING.md"
+)
+
+$downstreamForbiddenGlobs = @(
+    ".claude\agents\*.local.json.example"
+)
+
+if ($Profile -eq "kit") {
+    Write-Pass "installed file policy skipped for kit repository"
+} else {
+    $mustExist = @()
+    $mustExist += $coreMustExist
+    if ($Profile -eq "unity") {
+        $mustExist += $unityMustExist
+    }
+
+    foreach ($path in $mustExist) {
+        if (Test-RelativePath $path) {
+            Write-Pass "exists: $path"
+        } else {
+            Write-Fail "missing required install item: $path"
+        }
+    }
+
+    if ($Profile -eq "core") {
+        foreach ($path in $unityMustExist) {
+            if (Test-RelativePath $path) {
+                Write-Fail "core profile should not include: $path"
+            }
+        }
+    }
+
+    foreach ($path in $downstreamMustNotExist) {
+        if (Test-RelativePath $path) {
+            Write-Fail "downstream install should not include: $path"
+        }
+    }
+
+    foreach ($pattern in $downstreamForbiddenGlobs) {
+        if (Test-RelativeGlob $pattern) {
+            Write-Fail "downstream install should not include files matching: $pattern"
+        }
+    }
+}
+
+Write-Host ""
+
+# ============================================================
+# Check 4: Install script test (core profile)
 # ============================================================
 Write-Host "=== Validate: Install script (core) ==="
 
 $installScript = Join-Path $scriptRoot "install-claude-kit.ps1"
-$testTarget = Join-Path $env:TEMP "validate-kit-test"
+$testTarget = Join-Path $env:TEMP "validate-kit-test-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
 
 try {
     if (-not (Test-Path -LiteralPath $installScript)) {
