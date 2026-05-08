@@ -42,13 +42,32 @@ try {
     $extracted = Get-ChildItem -Path $tempDir -Directory | Select-Object -First 1
     $installScript = Join-Path $extracted.FullName "scripts\install-claude-kit.ps1"
 
-    $profileArg = if ($Profile -eq "auto") { "-AutoProfile" } else { "-Profile $Profile" }
-    $forceArg = if ($Force) { "-Force" } else { "" }
-    $docsArg = if ($IncludeDocs) { "-IncludeDocs" } else { "" }
+    $powershellCommand = Get-Command pwsh -ErrorAction SilentlyContinue
+    if (-not $powershellCommand) {
+        $powershellCommand = Get-Command powershell.exe -ErrorAction Stop
+    }
 
-    $cmd = "powershell -ExecutionPolicy Bypass -File `"$installScript`" -Target `"$Target`" $profileArg $forceArg $docsArg"
-    Write-Host "Running: $cmd"
-    Invoke-Expression $cmd
+    $installerArgs = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", $installScript,
+        "-Target", $Target
+    )
+
+    if ($Profile -eq "auto") {
+        $installerArgs += "-AutoProfile"
+    } else {
+        $installerArgs += @("-Profile", $Profile)
+    }
+
+    if ($Force) { $installerArgs += "-Force" }
+    if ($IncludeDocs) { $installerArgs += "-IncludeDocs" }
+
+    Write-Host "Running: $($powershellCommand.Source) $($installerArgs -join ' ')"
+    & $powershellCommand.Source @installerArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Installer failed with exit code $LASTEXITCODE"
+    }
 
     Write-Host "Install complete."
 } finally {

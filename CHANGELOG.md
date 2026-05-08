@@ -21,6 +21,10 @@ All notable changes to this kit are documented here.
 - README and skills-manifest: added skill routing rules (when to use which)
 - Skills-manifest: comprehensive "Add A New Skill" guide with checklist
 
+### Fixed
+- Remote installer avoids `Invoke-Expression` when launching the downloaded local installer, preventing ExecutionPolicy failures.
+- Auto profile detection now checks `Packages/manifest.json` as a file.
+
 ## [0.1.1] - 2026-05-08
 
 ### Changed

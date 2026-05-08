@@ -17,7 +17,7 @@ $ErrorActionPreference = "Stop"
 $targetRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Target)
 if ($AutoProfile) {
     $hasAssets = Test-Path (Join-Path $targetRoot "Assets") -PathType Container
-    $hasManifest = Test-Path (Join-Path $targetRoot "Packages\manifest.json") -PathType Container
+    $hasManifest = Test-Path (Join-Path $targetRoot "Packages\manifest.json") -PathType Leaf
     if ($hasAssets -and $hasManifest) {
         $Profile = "unity"
         Write-Host "Auto-detected profile: unity"
