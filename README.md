@@ -11,10 +11,10 @@
 - `CLAUDE.md`: 通用 Claude Code 项目指令，每 turn 自动加载。
 - `AGENTS.md`: AI 代理交接说明。
 - `.claude/rules/`: 通用开发、安全、Token 节省和 Unity C# 规则。
-- `.claude/skills/`: 8 个可复用 skill — engineer、coder、orchestrator、GitHub 规范、学习笔记、进度汇报、Unity 6、配置维护。
+- `.claude/skills/`: 7 个可复用 skill — engineer、coder、orchestrator、GitHub 规范、学习笔记、Unity 6、配置维护。
 - `.claude/agents/`: engineer/coder 角色预设（含 DeepSeek 本地覆盖模板）。
 - `.claude/settings.json`: 权限基线，拒绝 push/reset/递归删除等高风险命令。
-- `.claude/commands/`: 常用命令模板。
+- `.claude/commands/`: 常用命令模板，例如 `progress` 进度摘要。
 - `docs/`: 工作流指南、反模式参考、技能清单、模型路由说明、下游模板。
 - `scripts/`: 本地安装、远程安装（一行部署）、pre-commit hook。
 - `.github/workflows/`: CI 自动验证 YAML、安装脚本和密钥扫描。
@@ -68,5 +68,9 @@ irm https://raw.githubusercontent.com/YIMO691/claude-skills-kit/main/scripts/ins
 
 - Skill 负责工作流触发和流程约束，适合沉淀可复用做法。
 - Agent 负责角色预设，适合手动选择 engineer 或 coder。
-- 复杂任务使用 `engineer-coder-orchestrator`，把设计 brief 和实现任务分开，减少返工。
+- 简单实现、修 bug、配置、小文档：直接使用 `coder` 或当前上下文实现。
+- 纯方案、架构、接口、任务拆解：直接使用 `engineer`。
+- 复杂且要落地的功能：使用 `engineer-coder-orchestrator`，把设计 brief 和实现任务分开，减少返工。
+- Unity 相关任务：叠加 `unity6-project`。
+- 维护本 kit：叠加 `claude-config-maintainer`。
 - 默认不在 agent JSON 中写死 model；当前环境中主线程运行在 v4-pro（engineer），Agent 工具运行在 v4-flash（coder），自然形成物理分离。详见 `docs/workflows/agent-model-routing.md`。

@@ -14,9 +14,12 @@ All notable changes to this kit are documented here.
 - README badges: version, license, CI status
 
 ### Changed
-- CLAUDE.md: trimmed workflow and code-principles sections (~10 lines saved)
-- Template files in `docs/templates/github/` reduced to minimal skeletons
-- Rules annotated with audience labels (`all-agents` / `unity-agents`)
+- Skills reduced from 8 to 7: removed `project-progress-reporter` (duplicate of `/progress` command)
+- `claude-config-maintainer` excluded from `core` profile (kit-maintainer only, not deployed to projects)
+- Orchestrator: removed dependency-check step (skills always co-deployed)
+- `github-repo-standards`: graceful fallback when template directory is missing
+- README and skills-manifest: added skill routing rules (when to use which)
+- Skills-manifest: comprehensive "Add A New Skill" guide with checklist
 
 ## [0.1.1] - 2026-05-08
 

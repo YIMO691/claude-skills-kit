@@ -19,8 +19,10 @@ This file provides reusable guidance for Claude Code or other coding agents work
 
 - `.claude/skills/` 是可触发工作流：描述何时使用、读什么、怎么做、如何验证。
 - `.claude/agents/` 是角色预设：用于手动选择 engineer 或 coder 的语气、职责和默认模型。
-- 复杂任务优先用 `engineer-coder-orchestrator`：先产出 engineer brief，再由 coder scoped implementation。
-- 简单任务不需要编排，直接按当前上下文实现即可。
+- 简单实现、修 bug、配置、小文档：直接使用 `coder` 或当前上下文实现，不需要编排。
+- 纯方案、架构、接口、任务拆解：直接使用 `engineer`。
+- 复杂且要落地的功能：使用 `engineer-coder-orchestrator`，先产出 engineer brief，再由 coder scoped implementation。
+- Unity 相关任务叠加 `unity6-project`；维护本 kit 时叠加 `claude-config-maintainer`。
 
 ## 代码原则
 
