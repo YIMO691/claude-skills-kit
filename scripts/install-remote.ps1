@@ -46,7 +46,7 @@ try {
     $forceArg = if ($Force) { "-Force" } else { "" }
     $docsArg = if ($IncludeDocs) { "-IncludeDocs" } else { "" }
 
-    $cmd = "& `"$installScript`" -Target `"$Target`" $profileArg $forceArg $docsArg"
+    $cmd = "powershell -ExecutionPolicy Bypass -File `"$installScript`" -Target `"$Target`" $profileArg $forceArg $docsArg"
     Write-Host "Running: $cmd"
     Invoke-Expression $cmd
 
