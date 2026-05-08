@@ -11,7 +11,6 @@ Use `engineer` for design clarity, then `coder` for scoped implementation. Keep 
 
 ## Workflow
 
-0. Confirm `.claude/skills/engineer/SKILL.md` and `.claude/skills/coder/SKILL.md` exist. If one is missing, fall back to the agent role prompt and state that the dependency is missing.
 1. Define the user goal and acceptance checks.
 2. Run an engineer pass:
    - inspect current project context

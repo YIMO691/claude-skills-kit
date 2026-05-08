@@ -9,7 +9,6 @@ Use this file before adding or renaming a skill.
 | `engineer-coder-orchestrator` | 双角色编排 | 需要先设计再实现，或需要 engineer 到 coder 的明确交接 |
 | `github-repo-standards` | GitHub 仓库规范 | 准备发布 GitHub、补齐社区健康文件 |
 | `learning-blog` | 学习笔记 | 记录一次工具学习、排错、环境配置或开发复盘 |
-| `project-progress-reporter` | 进度摘要 | 汇报项目当前状态、Git 状态、日志或阻塞 |
 | `unity6-project` | Unity 6 开发 | Unity 6、C#、NavMesh、Behavior、ML-Agents、Sentis 相关任务 |
 | `claude-config-maintainer` | 配置仓库维护 | 更新本仓库规则、skills、commands、安装脚本 |
 

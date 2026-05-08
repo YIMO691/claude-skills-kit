@@ -29,6 +29,6 @@ description: 检查和补齐 GitHub 仓库社区标准文件。Use when the user
 
 ## Templates
 
-- 先读 `docs/templates/github/README.md` 了解模板与源文件的关系。
-- 目标项目无本地模板时，从 `docs/templates/github/` 复制。如果模板比本仓库源文件旧，优先参照源文件内容生成。
+- 若 `docs/templates/github/` 存在，先读 README.md 了解模板与源文件关系，优先参照最新源文件生成。
+- 若模板目录不存在（未安装 docs），直接根据项目上下文和通用最佳实践生成所需文件，不报错。
 - 模板文件头部有 `source of truth` 声明，复制到下游项目时移除该声明行。

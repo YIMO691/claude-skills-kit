@@ -123,6 +123,7 @@ $skillExclusions = @()
 if ($Profile -eq "core") {
     $ruleExclusions += "unity-csharp.md"
     $skillExclusions += "unity6-project"
+    $skillExclusions += "claude-config-maintainer"
 }
 
 $items += Add-FileItems -RelativeRoot ".claude\rules" -ExcludeNames $ruleExclusions
