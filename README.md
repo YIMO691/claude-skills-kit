@@ -2,59 +2,59 @@
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue)](VERSION) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![CI](https://github.com/YIMO691/claude-skills-kit/actions/workflows/validate.yml/badge.svg)](https://github.com/YIMO691/claude-skills-kit/actions/workflows/validate.yml)
 
-这是一个可复制、可持续更新的 Claude/Codex 通用配置仓库。它从 `F:\Unity6_AI` 中提炼了通用工作规则、开发流程、仓库规范、学习笔记、进度汇报和 Unity 6 项目经验，方便新项目少做重复配置。
+可复制、可持续更新的 Claude/Codex 通用配置仓库。提供 engineer(架构师) + coder(码农) 双角色协作体系、自动发现式安装脚本、CI 验证和一行部署能力。适合在新项目中快速搭建 AI 编码协作基线，少做重复配置。
 
 当前版本：`0.2.0`，见 [VERSION](VERSION)。
 
 ## 内容
 
-- `CLAUDE.md`: 新项目的通用 Claude Code 项目指令。
-- `AGENTS.md`: 给不同 AI 代理阅读的交接说明。
-- `.claude/rules/`: 通用开发、安全、token 节省和 Unity C# 规则。
-- `.claude/skills/`: 可复用 skill，包括架构设计、代码实现、仓库规范、学习笔记、进度汇报、Unity 6 项目和配置维护。
-- `.claude/agents/`: engineer/coder 两个角色配置。
-- `.claude/settings.json`: 项目级权限基线，默认允许只读检查并拒绝 push、强制 reset 和递归删除等高风险命令。
+- `CLAUDE.md`: 通用 Claude Code 项目指令，每 turn 自动加载。
+- `AGENTS.md`: AI 代理交接说明。
+- `.claude/rules/`: 通用开发、安全、Token 节省和 Unity C# 规则。
+- `.claude/skills/`: 8 个可复用 skill — engineer、coder、orchestrator、GitHub 规范、学习笔记、进度汇报、Unity 6、配置维护。
+- `.claude/agents/`: engineer/coder 角色预设（含 DeepSeek 本地覆盖模板）。
+- `.claude/settings.json`: 权限基线，拒绝 push/reset/递归删除等高风险命令。
 - `.claude/commands/`: 常用命令模板。
-- `docs/`: 新项目安装、GitHub 发布、token 节省和文件组织说明。
-- `scripts/install-claude-kit.ps1`: 将本仓库配置同步到新项目。
-- `LICENSE`、`SECURITY.md`、`CONTRIBUTING.md`、`.github/`: GitHub 发布基线。
+- `docs/`: 工作流指南、反模式参考、技能清单、模型路由说明、下游模板。
+- `scripts/`: 本地安装、远程安装（一行部署）、pre-commit hook。
+- `.github/workflows/`: CI 自动验证 YAML、安装脚本和密钥扫描。
+- `LICENSE`、`SECURITY.md`、`CONTRIBUTING.md`、`CHANGELOG.md`、`MAINTAINERS.md`。
 
 ## 快速使用
 
-**一行部署（推荐）：**
+**一行部署（推荐，无需 clone）：**
 
 ```powershell
 irm https://raw.githubusercontent.com/YIMO691/claude-skills-kit/main/scripts/install-remote.ps1 | iex
 ```
 
-在当前目录安装，自动检测项目类型。也可指定目标：
+在当前目录自动检测项目类型并安装。可指定目标和 profile：
 
 ```powershell
-.\install-remote.ps1 -Target "F:\MyProject" -Profile unity
+# 下载后指定参数
+. { irm ... } | iex -Target "F:\MyProject" -Profile unity
 ```
 
 **本地安装（已 clone 仓库）：**
 
 ```powershell
-cd "F:\Claude skills"
-powershell -ExecutionPolicy Bypass -File .\scripts\install-claude-kit.ps1 -Target "F:\YourProject" -Profile core
+# 自动检测项目类型
+.\scripts\install-claude-kit.ps1 -Target "F:\MyProject" -AutoProfile
+
+# 手动指定 profile
+.\scripts\install-claude-kit.ps1 -Target "F:\MyProject" -Profile core
+.\scripts\install-claude-kit.ps1 -Target "F:\UnityProject" -Profile unity
 ```
 
-Unity 项目使用：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-claude-kit.ps1 -Target "F:\YourUnityProject" -Profile unity
-```
-
-如果目标项目已有 `CLAUDE.md`、`AGENTS.md` 或 `.claude` 文件，脚本默认不覆盖。确认要更新时加 `-Force`。
+如果目标项目已有配置文件，脚本默认跳过不覆盖。确认要更新时加 `-Force`。
 
 ## 更新策略
 
 1. 先在具体项目中验证规则或 skill 是否真的有用。
 2. 回到本仓库，把可复用部分抽象出来，不写入项目私有路径、密钥、账号或临时状态。
 3. 更新 `docs/reference/skills-manifest.md`。
-4. 在一个空目录或测试项目中运行安装脚本验证。
-5. 提交并推送到 GitHub。
+4. 提交前运行 `scripts/pre-commit.ps1`；push 后 CI 自动验证安装脚本和密钥扫描。
+5. 更新 `CHANGELOG.md` 和 `VERSION`，打 tag 推送。
 
 ## Token 节省原则
 
@@ -69,4 +69,4 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-claude-kit.ps1 -Targe
 - Skill 负责工作流触发和流程约束，适合沉淀可复用做法。
 - Agent 负责角色预设，适合手动选择 engineer 或 coder。
 - 复杂任务使用 `engineer-coder-orchestrator`，把设计 brief 和实现任务分开，减少返工。
-- 默认不在 agent JSON 中写死 model；DeepSeek 等本地路由见 `docs/workflows/agent-model-routing.md`。
+- 默认不在 agent JSON 中写死 model；当前环境中主线程运行在 v4-pro（engineer），Agent 工具运行在 v4-flash（coder），自然形成物理分离。详见 `docs/workflows/agent-model-routing.md`。
