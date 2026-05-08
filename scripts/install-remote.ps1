@@ -5,7 +5,8 @@
 
 .DESCRIPTION
   Usage: irm https://raw.githubusercontent.com/YIMO691/claude-skills-kit/main/scripts/install-remote.ps1 | iex
-  Or:    .\install-remote.ps1 -Target "F:\MyProject"
+  Or:    irm .../install-remote.ps1 | iex -Ref v0.2.0
+  Or:    .\install-remote.ps1 -Target "F:\MyProject" -Ref v0.2.0
 
   Downloads the latest kit from GitHub main branch, runs the installer, and cleans up.
 #>
@@ -16,15 +17,25 @@ param(
     [string]$Profile = "auto",
     [switch]$Force,
     [switch]$IncludeDocs,
-    [string]$Branch = "main"
+    [string]$Branch = "main",
+    [string]$Ref = ""
 )
 
 $ErrorActionPreference = "Stop"
-$repoUrl = "https://github.com/YIMO691/claude-skills-kit/archive/refs/heads/$Branch.zip"
+if ($Ref) {
+    if ($Ref.StartsWith("v")) {
+        $repoUrl = "https://github.com/YIMO691/claude-skills-kit/archive/refs/tags/$Ref.zip"
+    } else {
+        $repoUrl = "https://github.com/YIMO691/claude-skills-kit/archive/refs/heads/$Ref.zip"
+    }
+} else {
+    $repoUrl = "https://github.com/YIMO691/claude-skills-kit/archive/refs/heads/$Branch.zip"
+}
 $tempDir = Join-Path $env:TEMP "claude-skills-kit-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
 
 try {
-    Write-Host "Downloading Claude Skills Kit ($Branch)..."
+    $label = if ($Ref) { $Ref } else { $Branch }
+    Write-Host "Downloading Claude Skills Kit ($label)..."
     $zipPath = Join-Path $env:TEMP "claude-skills-kit.zip"
 
     # Use Invoke-WebRequest as primary; fall back to curl
@@ -32,7 +43,7 @@ try {
         Invoke-WebRequest -Uri $repoUrl -OutFile $zipPath -ErrorAction Stop
     } catch {
         Write-Host "WebRequest failed, trying curl..."
-        curl -L -o $zipPath $repoUrl
+        curl.exe -L -o $zipPath $repoUrl
     }
 
     Write-Host "Extracting..."

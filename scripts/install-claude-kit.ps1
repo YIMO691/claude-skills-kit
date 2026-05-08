@@ -8,13 +8,23 @@ param(
 
     [switch]$Force,
 
-    [switch]$IncludeDocs
+    [switch]$IncludeDocs,
+
+    [switch]$DryRun,
+
+    [switch]$Backup
 )
 
 $ErrorActionPreference = "Stop"
 
 # Auto-detect profile: scan target for Unity project markers
 $targetRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Target)
+
+if ($Backup) {
+    $backupTimestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $backupRoot = Join-Path $targetRoot ".claude-kit-backup\$backupTimestamp"
+}
+
 if ($AutoProfile) {
     $hasAssets = Test-Path (Join-Path $targetRoot "Assets") -PathType Container
     $hasManifest = Test-Path (Join-Path $targetRoot "Packages\manifest.json") -PathType Leaf
@@ -36,7 +46,8 @@ if (-not (Test-Path -LiteralPath $targetRoot)) {
 function Copy-KitItem {
     param(
         [Parameter(Mandatory = $true)][string]$RelativePath,
-        [Parameter(Mandatory = $true)][string]$DestinationRelativePath
+        [Parameter(Mandatory = $true)][string]$DestinationRelativePath,
+        [switch]$DryRun
     )
 
     $src = Join-Path $sourceRoot $RelativePath
@@ -44,6 +55,18 @@ function Copy-KitItem {
 
     if (-not (Test-Path -LiteralPath $src)) {
         throw "Missing source item: $src"
+    }
+
+    # Dry-run: report without copying
+    if ($DryRun) {
+        if ((Test-Path -LiteralPath $dst) -and -not $Force) {
+            Write-Host "[DryRun] would skip: $DestinationRelativePath"
+            $script:dryRunWouldSkip++
+        } else {
+            Write-Host "[DryRun] would copy: $DestinationRelativePath"
+            $script:dryRunWouldCopy++
+        }
+        return
     }
 
     if ((Test-Path -LiteralPath $dst) -and -not $Force) {
@@ -54,6 +77,16 @@ function Copy-KitItem {
     $parent = Split-Path -Parent $dst
     if ($parent -and -not (Test-Path -LiteralPath $parent)) {
         New-Item -ItemType Directory -Force -Path $parent | Out-Null
+    }
+
+    # Backup existing file before overwriting
+    if ($Backup -and (Test-Path -LiteralPath $dst)) {
+        $backupDstDir = Join-Path $backupRoot (Split-Path -Parent $DestinationRelativePath)
+        if (-not (Test-Path -LiteralPath $backupDstDir)) {
+            New-Item -ItemType Directory -Force -Path $backupDstDir | Out-Null
+        }
+        Copy-Item -LiteralPath $dst -Destination (Join-Path $backupRoot $DestinationRelativePath) -Force
+        Write-Host "backed up: $DestinationRelativePath"
     }
 
     Copy-Item -LiteralPath $src -Destination $dst -Recurse -Force:$Force
@@ -134,8 +167,15 @@ if ($IncludeDocs) {
     $items += @{ Source = "docs\reference"; Dest = "docs\reference" }
 }
 
+$script:dryRunWouldCopy = 0
+$script:dryRunWouldSkip = 0
+
 foreach ($item in $items) {
-    Copy-KitItem -RelativePath $item.Source -DestinationRelativePath $item.Dest
+    Copy-KitItem -RelativePath $item.Source -DestinationRelativePath $item.Dest -DryRun:$DryRun
+}
+
+if ($DryRun) {
+    Write-Host "[DryRun] Summary: $dryRunWouldCopy would copy, $dryRunWouldSkip would skip, $($items.Count) total items"
 }
 
 Write-Host "Done. Target: $targetRoot Profile: $Profile"

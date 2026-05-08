@@ -14,38 +14,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate YAML frontmatter
+      - name: Validate kit
         shell: pwsh
-        run: |
-          $failed = $false
-          $skillFiles = Get-ChildItem -Path ".claude\skills" -Recurse -Filter "SKILL.md" -ErrorAction SilentlyContinue
-          if (-not $skillFiles -or $skillFiles.Count -eq 0) {
-            Write-Host "::warning::No SKILL.md files found under .claude/skills/"
-            exit 0
-          }
-          foreach ($file in $skillFiles) {
-            $content = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
-            if (-not $content) { continue }
-            # Cross-platform: handle both CRLF and LF line endings; (?s) makes . match newlines
-            if (-not ($content -match '(?s)^---\s*\r?\n(.+?)\r?\n---\s*\r?\n')) {
-              Write-Host "::error file=$($file.FullName)::Missing or malformed YAML frontmatter (expected --- delimiters)"
-              $failed = $true
-              continue
-            }
-            $frontmatter = $matches[1]
-            if ($frontmatter -notmatch '(?m)^name:\s*\S') {
-              Write-Host "::error file=$($file.FullName)::Missing 'name' field in frontmatter"
-              $failed = $true
-            }
-            if ($frontmatter -notmatch '(?m)^description:\s*\S') {
-              Write-Host "::error file=$($file.FullName)::Missing 'description' field in frontmatter"
-              $failed = $true
-            }
-          }
-          if ($failed) {
-            exit 1
-          }
-          Write-Host "All SKILL.md files have valid frontmatter."
+        run: .\scripts\validate-kit.ps1
 
       - name: Test install script
         shell: pwsh
@@ -67,6 +38,22 @@ jobs:
             exit 1
           }
           Write-Host "Install script verified successfully. All required files present in $target"
+
+      - name: Test remote install script
+        shell: pwsh
+        run: |
+          $target = Join-Path $env:TEMP "test-remote-install"
+          if (Test-Path $target) { Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue }
+          # Test remote script locally (it won't download since kit is already checked out)
+          & pwsh -ExecutionPolicy Bypass -File ".\scripts\install-claude-kit.ps1" -Target $target -Profile unity -Force
+          # Verify Unity-specific skill exists
+          $unitySkill = Join-Path $target ".claude\skills\unity6-project"
+          if (Test-Path $unitySkill) {
+            Write-Host "Remote install unity profile test PASSED"
+          } else {
+            Write-Host "::error::Unity profile test failed — unity6-project skill missing"
+            exit 1
+          }
 
   secrets-scan:
     runs-on: ubuntu-latest
