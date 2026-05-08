@@ -68,5 +68,14 @@ jobs:
           }
           Write-Host "Install script verified successfully. All required files present in $target"
 
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_CONFIG: .gitleaks.toml
